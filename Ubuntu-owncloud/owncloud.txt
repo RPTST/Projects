@@ -1,0 +1,65 @@
+sudo su -
+apt-get install -y wget openssh curl
+sh -c "echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/xUbuntu_13.10/ /' >> /etc/apt/sources.list.d/owncloud.list"
+apt-get update
+apt-get install owncloud
+
+wget http://download.opensuse.org/repositories/isv:ownCloud:community/xUbuntu_13.10/Release.key
+apt-key add - < Release.key
+
+apt-get install owncloud apache2 mysql-server php5 php5-mysql
+
+cp -p /etc/apache2/apache2.conf /etc/apache2/apache2.conf.orig
+
+apt-get install -y nano
+
+nano /etc/apache2/apache2.conf
+
+<Directory /var/www/>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+</Directory>
+
+cp -p /etc/apache2/conf.d/owncloud.conf  /etc/apache2/conf.d/owncloud.conf.orig
+
+nano /etc/apache2/conf.d/owncloud.conf 
+
+<Directory /var/www/owncloud>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride All
+    Require all granted
+</Directory>
+
+a2enmod rewrite
+
+/etc/init.d/apache2 restart
+
+/etc/init.d/mysql restart
+
+mysql -u root -p
+
+After login you will get the mysql prompt like this
+mysql >
+Now create a user and set the password. Use strong password
+mysql> CREATE USER 'ownclouduser'@'localhost' IDENTIFIED BY 'Password';
+create database called owncloud
+mysql> create database owncloud;
+Grant privileges to owncloud user in owncloud database
+mysql> GRANT ALL ON owncloud.* TO 'ownclouduser'@'localhost';
+mysql> flush privileges;
+mysql> exit
+
+Open the browser and type http://192.168.0.72/owncloud .Fill all the information field as asked in Webinterface
+
+User Name : Give Admin user name
+Password : Give Admin user’s password
+
+Click on Advanced button
+Data Folder: It will be selected by-default
+In “configure the database” section,click on MySQL and fill
+MySQL user : ownclouduser
+Password : Give mysql ownclouduser password
+Database Name : owncloud
+Database Host: localhost
+
