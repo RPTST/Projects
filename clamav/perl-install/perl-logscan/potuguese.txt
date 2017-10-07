@@ -1,0 +1,14 @@
+### Translate to Portuguese - Brasil
+
+$totalinfo= "Total De Virus Da Ultima Semana ";
+$titleinfo="<head> <title> Estatisticas Do Virus Scan </title> </head>
+<body>";
+$titleinfo2=" <font face=verdana size=4> Estatisticas Virus Scan Na Semana
+</font><p>";
+
+$virusname=" Nome Do Virus/Info";
+$numberofviruses="Numero De Ocorrencias";
+$nodataavailable="Nao Ha Dados Disponiveis Para Esta Semana";
+$weekofdisplay="Dia Da Semana";
+$numberofvirushtm="Numero<br>of<br>viruses";
+$virusscanweeklygraph="Grafico Semanal Virus Scan";

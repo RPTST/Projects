@@ -1,0 +1,10 @@
+Clamd, when listening on an IP address, has no provisions for limiting what
+hosts can connect to the service, or what commands can be executed once
+connected.  This was one of the first things I thought would be fixed when
+Sourcefire acquired the project.  Years later ...
+
+Clam Bake
+Download Freely.
+Enjoy thoroughly.
+Use Responsibly.
+

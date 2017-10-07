@@ -1,0 +1,12 @@
+$totalinfo= "Ca³kowita liczba wirusów w tygodniu do";
+$titleinfo=" <head> <title> Statystyki skanera antywirusowego RAV </title> </head>
+ <body> ";
+$titleinfo2="
+<font face=verdana size=4> Statystyki skanera antywirusowego RAV<br> w zestawieniach tygodniowych </font><p>";
+
+$virusname=" Nazwa wirusa/Info";
+$numberofviruses="Liczba wirusów";
+$weekofdisplay="Skanera Statystyki";
+$numberofvirushtm="Liczba<br>Wirusow";
+$virusscanweeklygraph="Skanera Statystyki";
+

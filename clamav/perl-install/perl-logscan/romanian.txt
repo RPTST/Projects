@@ -1,0 +1,12 @@
+$totalinfo= "Numarul total de virusi pana la sfarsitul saptamanii";
+$titleinfo="<head> <title> Statistica Virusilor Scanati </title> </head>
+<body>";
+$titleinfo2=" <font face=verdana size=4> Statistica Saptamanala a Virusilor Scanati 
+</font><p>"; 
+
+$virusname=" Numele Virusului/Info";
+$numberofviruses="Numarul de Prezente";
+$nodataavailable="Date indisponibile pentru aceasta saptamana";
+$weekofdisplay="Saptamana afisata:";
+$numberofvirushtm="Numarul<br>virusilor";
+$virusscanweeklygraph="Graficul Saptamanal al Virusilor";

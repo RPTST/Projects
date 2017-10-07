@@ -1,0 +1,15 @@
+$totalinfo= "Isvis virusu savaites gale ";
+$titleinfo="<head> <title> Virusu skanavimo statistika </title> </head>
+<body>";
+$titleinfo2=" <font face=verdana size=4> Virusu skanavimo statistika savaites
+lenteleje
+</font><p>";
+
+$virusname=" Viruso pavadinimas/Informacija";
+$numberofviruses="Number of Occurances";
+$nodataavailable="Nera duomenu siai savaitei";
+$weekofdisplay="Rodoma savaite";
+$numberofvirushtm="Virusu<br><br>kiekis";
+$virusscanweeklygraph="Virusu skanavimo savaites grafikai";
+
+

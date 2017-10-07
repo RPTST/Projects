@@ -1,0 +1,14 @@
+$totalinfo= "Total de Virus para la semana anterior";
+$titleinfo="<head> <title> Estad&iacute;sticas de detecci&oacute;n de 
+virus</title> </head>
+<body>";
+$titleinfo2=" <font face=verdana size=4> Tabla de escaneo de virus por 
+semana
+</font><p>";
+
+$virusname=" Nombre/informaci&oacute;n de Virus ";
+$numberofviruses="N&uacute;mero de Ocurrencias";
+$nodataavailable="No hay datos para esta semana";
+$weekofdisplay="Semana en despliegue";
+$numberofvirushtm="Numero<br>de<br>virus";
+$virusscanweeklygraph="Grafico semanal de analisis de virus ";

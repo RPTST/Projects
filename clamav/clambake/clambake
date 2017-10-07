@@ -1,0 +1,381 @@
+#!/usr/bin/perl -w
+
+#	Copyright (C) 2009-2011 Nathan Gibbs nathan@cmpublishers.com
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License version 1
+#	as published by the Free Software Foundation.
+
+eval 'exec /usr/bin/perl -w -S $0 ${1+"$@"}' if 0;
+
+use strict;
+use Getopt::Long;
+use IO::Socket::INET;
+use IO::Socket::UNIX;
+use English;
+
+my %opt;
+my $ME;
+($ME = $0) =~ s-.*/--;
+my $usage = "$ME [-d [ level ] [-a audit || boil || bake] [ -boil counter] [-p port] [-socket socket] [-t timeout] host [host...]
+Actions:
+Audit	Find Clam(d)s.
+Boil	Boil Clam(d)s.
+Bake	Have a CLAM(d) BAKE!\n";
+
+# parse the commandline if any
+GetOptions (\%opt, "debug=i", "boil=i", "action=s", "port=i", "socket=s", "timeout=i",) || die $usage;
+die "$ME: no host arguments\n" if (@ARGV == 0);
+my $DEBUG	= $opt{"debug"} || 0;
+my $ACTION	= uc($opt{"action"} || "audit");
+my $BOIL	= uc($opt{"boil"} || 10 );
+my $PORT	= $opt{"port"} || 3310;
+my $SOCKET	= $opt{"socket"} || "";
+my $TIMEOUT	= $opt{"timeout"} || 10;
+
+# Vars
+my ( $tmp, $host );
+my ( $Engine,$DB,$DBDate );
+my @failures = ();
+my @details = ();
+
+# Start
+print "Clam Bake 0.2\nDownload Freely.\nEnjoy thoroughly.\nUse Responsibly.\n\n";
+foreach $host (@ARGV) {
+	if ( $host=~m/(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})\/(\d{1,2})/ ) {
+		my ( $ip, $Snm )=( split (/\//, $host )) [0,1];
+		my $ipmin = &ipconvert($ip);
+		my $HCount=&NMHC($Snm);	#Get Host Count
+		my $ipmax = $ipmin + $HCount - 1;
+		print "  Subnet: $host\n";
+		print "Start IP: " . &ipdeconvert($ipmin). "\n";
+		print "  End IP: " . &ipdeconvert($ipmax). "\n";
+		print "   Hosts: $HCount\n";
+		for ( my $x = $ipmin; $x != $ipmax + 1 ; $x++ ) {
+			$host = &ipdeconvert($x);
+			if ($DEBUG) {
+				print "IP Pinger Trying: $host\n";
+			}
+			if (! &pinger($host)) {
+				push (@failures, $host);
+			}else{
+				if ($DEBUG) {
+					print "EXT Pinger RTN: OK\n";
+				}
+			}
+		}
+	}else{
+		print "    Host: $host\n";
+		if (! &pinger($host)) {
+			push (@failures, $host);
+		}else{
+			if ($DEBUG) {
+				print "EXT Pinger RTN: OK\n";
+			}
+		}
+	}
+}
+#print join (" ", sort @failures), "\n";
+if ( scalar @details > 0 ) {
+	print "\nSystem\t\tStatus Message\tEngine\tDB\tDate\n";
+	print @details;
+}
+if (@failures == 0) {
+	exit 0;
+}
+exit 1;
+
+sub pinger {
+	my $machine = shift;
+	my ( $mess, $OK, $TransactionOK, $API, $CCEE, $Status, $fd, $bt );
+	my $SMT = 0;
+	my $bc = 0;
+	my $fc = 0;
+	my $uc = 0;
+	my $fmt = "%-16s%-16s%-8s%-8s%-25s";
+	my $efmt = "%-16s%-16s";
+	my $lfmt = "\t%-24s%-16s%-25s";
+	($API,$SMT, $CCEE) = &Verproc($machine);
+	if( $API > -1 ) {
+		if ( $ACTION eq "AUDIT" ) {
+			$Status = "Accessable";
+			$TransactionOK = 1;
+			$OK = 1;
+		}elsif ( $ACTION eq "BAKE") {
+			$TransactionOK= eval {
+				# Catch them stinking timeouts
+				local $SIG{ALRM} = sub { die "Timeout Alarm" };
+				alarm $TIMEOUT;
+				my $sock = &getsock($machine);
+				if($sock) {
+					if ($DEBUG) {
+						print "INT Pinger MSG: Socket  OK\n";
+					}
+					select($sock); $| = 1;
+					select(STDOUT);
+					print $sock "nSHUTDOWN\n";
+					$Status = "Baked";
+					$OK = 1;
+					close($sock);
+				} else {
+					$Status = "Unreachable";
+					$OK = 1;
+				}
+			};
+			alarm 0; # Cancel the alarm
+			if ($EVAL_ERROR and ($EVAL_ERROR =~ /^Timeout Alarm/)) {
+				$Status = "SCX timeout($TIMEOUT)";
+			}
+		}elsif ( $ACTION eq "BOIL" ) {
+			for ( my $x = 0; $x != $BOIL; $x++ ) {
+				$TransactionOK= eval {
+					# Catch them stinking timeouts
+					local $SIG{ALRM} = sub { die "Timeout Alarm" };
+					alarm $TIMEOUT;
+					my $sock = &getsock($machine);
+					if($sock) {
+						if ($DEBUG) {
+							print "INT Pinger MSG: Socket  OK\n";
+						}
+						select($sock); $| = 1;
+						select(STDOUT);
+						print $sock "nRELOAD\n";
+						$mess = &resproc($sock);
+						if(!$mess) {
+							$Status = "Failed";
+							$fc++;
+						} else {
+							$Status = "Boiling";
+							$bc++;
+						}
+						close($sock);
+					} else {
+						$Status = "Unreachable";
+						$uc++;
+					}
+				};
+				alarm 0; # Cancel the alarm
+				if ($EVAL_ERROR and ($EVAL_ERROR =~ /^Timeout Alarm/)) {
+					$Status = "SCX timeout($TIMEOUT)";
+				}
+			}
+			$Status = "Boiled";
+			$OK = 1;
+		}else{
+			$Status = "Invalid Action";
+			$OK = 0;
+		}
+		if ($DEBUG) {
+			print "Pre Pinger RTN: ";
+			if ( $OK ) {
+				print "OK ";
+			}else{
+				print "Error "
+			}
+			print "with message $mess\n";
+		}
+	}else{
+		if ( $API == -1 ) {
+			$Status = "Unreachable";
+			$OK = 1;
+		}elsif ( $API == -2 ) {
+			$Status = "Timeout($TIMEOUT)";
+		}else{
+			$Status = "ICX Invalid";
+		}
+	}
+	if ( !$TransactionOK) {
+		$OK = 0;
+	}
+	if ( $OK == 1 ) {
+		$fd = sprintf ( $fmt, $machine,$Status,$Engine,$DB,$DBDate );
+	}else{
+		if ( $SMT == 1 ) {
+			$fd = sprintf ( $fmt, $machine,$Status,$Engine,$DB,$DBDate );
+		}else{
+			$fd = sprintf ( $efmt, $machine,$Status );
+		}
+	}
+	if ($Status eq "Boiled") {
+		$fd = "$fd\nBoiled $bc times.\nFailures $fc\nUnreachable $uc\n";;
+	}
+	push (@details, "$fd\n");
+	if ($DEBUG) {
+		print "INT Pinger RTN: $OK\n";
+	}
+	return($OK);
+}
+
+sub resproc {
+	my $sock = shift;
+	my $mess = <$sock>;
+	if ( $mess ) {
+		chomp $mess;
+		# Strip Session ID
+		if ( $mess=~m/(^\d{1,5}\:\s.*)/) {
+			$mess=~s/^\d{1,5}\:\s//;
+		}
+		# Strip Strem
+		if ( $mess=~m/(^stream\:\s.*)/) {
+			$mess=~s/^stream\:\s//;
+		}
+		# Strip Extended Detection Info
+		if ( $mess=~m/(\(.*\))/) {
+			$mess=~s/(\(.*\))//;
+		}
+	}
+	return($mess);
+}
+
+sub Verproc {
+	my $machine = shift;
+	my ( $CV, $CMDS, $mess );
+	my $API = 0;
+	my $SMT = 0;
+	my $CCEE = 0;
+	my $TransactionOK= eval {
+		# Catch them stinking timeouts
+		local $SIG{ALRM} = sub { die "Timeout Alarm" };
+		alarm $TIMEOUT;
+		my $sock = &getsock($machine);
+		if($sock) {
+			select($sock); $| = 1;
+			select(STDOUT);
+			print $sock "nVERSIONCOMMANDS\n";
+			$mess = &resproc($sock);
+			close($sock);
+		}else{
+			if ($DEBUG > 1 ) {
+				print "INT VerProc MSG: Can't get socket.\n";
+			}
+			$API = -1;
+		}
+	};
+	alarm 0; # Cancel the alarm
+	if ($EVAL_ERROR and ($EVAL_ERROR =~ /^Timeout Alarm/)) {
+		$API = -2;
+		if ($DEBUG > 1 ) {
+			print "INT VerProc MSG: Timeout\n";
+		}
+	}
+	if ( $TransactionOK && $API == 0 ) {
+		if ( !$mess ) {
+			$API = -3;
+		}else{
+			if ($DEBUG > 1 ) {
+				print "INT VerProc MSG: $mess\n";
+			}
+			chomp $mess;
+			if ( $mess=~m/(|)/) {
+				($CV, $CMDS) = split (/\|/, $mess);
+				if ( $CMDS=~m/(DETSTATS)/) {
+					# 0.96.5+
+					$API = 2;
+				}else{
+					# 0.95x+
+					$API = 1;
+				}
+				if ( $CMDS=~m/(DBLIST)/) {
+					# CCEE is in the house. :-)
+					$CCEE = 1
+				}else{
+					$CCEE = 0
+				}
+			}else{
+				# 0.94x
+				$CV = $mess;
+				$API = 0;
+			}
+			if ($DEBUG > 1 ) {
+				print "INT VerProc MSG: CV $CV\n";
+			}
+			# Split out version Info
+			if ( $CV=~m/(\/)/) {
+				($Engine, $DB, $DBDate) = split (/\//, $CV);
+				$Engine=~s/ClamAV\s//;
+				$SMT = 1;
+			}else{
+				$SMT = 0;
+			}
+		}
+	}else{
+		if ($DEBUG > 1 ) {
+			print "INT VerProc MSG: Other Error: $EVAL_ERROR\n";
+		}
+		$API = -1;
+	}
+	if ($DEBUG > 1 ) {
+		print "INT VerProc RTN: $API $SMT $CCEE\n";
+	}
+	return ($API,$SMT,$CCEE);
+}
+
+sub getsock {
+	my $machine = shift;
+	my $sock;
+	if (($SOCKET) && (lc($machine) eq "localhost")) {
+		if ($DEBUG > 1 ) {
+			print "INT GetSock MSG: UNIX socket: $SOCKET\n";
+		}
+		$sock = IO::Socket::UNIX->new(
+			Peer => $SOCKET,
+			Type => SOCK_STREAM);
+	} else {
+		if ($DEBUG > 1 ) {
+			print "INT GetSock MSG: INET socket: $machine:$PORT\n";
+		}
+		$sock = IO::Socket::INET->new(
+			PeerPort => $PORT,
+			PeerAddr => $machine,
+			Proto => 'tcp',
+			Timeout => $TIMEOUT,
+			Type => SOCK_STREAM);
+	}
+	return($sock);
+}
+
+sub ipconvert { # Conver quad not. ip to flat #
+    my ( $ip ) = @_;
+    my ( @IP, @Ocmindex, $tmp );
+    @Ocmindex = qw ( 16777216 65536 256 1 );
+    @IP=$ip=~m/(\d{1,3})/g;
+    $ip = 0;
+    for ( $tmp = 0 ; $tmp != 4 ; $tmp++ ) {
+		$ip = $ip + ( $IP [$tmp] * $Ocmindex [$tmp] );
+    }
+    return($ip);
+}
+
+sub ipdeconvert { # convert flat # to quad not IP
+    my ( $ip ) = @_;
+    my ( @IP, @Ocmindex, $tmp, $ipt );	
+    @Ocmindex = qw ( 16777216 65536 256 1 );
+    for ( $tmp = 0 ; $tmp != 4 ; $tmp++ ) {
+		$IP [ $tmp ] = int ( $ip / $Ocmindex [$tmp] );
+		$ip = $ip - ( $IP [$tmp] * $Ocmindex [$tmp] );
+    }
+    $ipt="";
+    for ( $tmp = 0 ; $tmp != 4 ; $tmp++ ) {
+		if ( $tmp != 3 ) {
+	    	$ipt = $ipt . $IP [$tmp] . ".";
+		}else{
+	    	$ipt = $ipt . $IP [$tmp];
+		}
+    }
+    return($ipt);
+}
+
+sub NMHC {  # Derive host Count from netmask.
+    my ( $Snm ) = @_;
+    my ( @Ocmindex, @Snindex, $Ocm, $Sni, $HCount );
+    @Ocmindex = qw ( 16777216 65536 256 1 );
+    @Snindex =qw ( 256 128 64 32 16 8 4 2 );
+    if ( $Snm !=32 ) {			# If NOT a host
+        $Ocm = $Ocmindex [ int ( $Snm / 8 ) ];	# Total octet matches
+		$Sni = $Snindex [ ($Snm % 8) ];		# Total subnets to deal with
+		$HCount = ( $Ocm * $Sni );
+    }else{
+		$HCount = 1;
+    }    
+    return($HCount);
+}

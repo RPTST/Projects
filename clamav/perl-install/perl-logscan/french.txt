@@ -1,0 +1,13 @@
+$totalinfo= "Virus totaux pour la fin de semaine ";
+$titleinfo="<head> <title> Statistiques De Balayage De Virus 
+</title> </head>
+<body>";
+$titleinfo2=" <font face=verdana size=4> 
+Statistiques de balayage de virus dans la table hebdomadaire </font><p>"; 
+
+$virusname="Information/Nom du Virus";
+$numberofviruses="Nombre d'Occurances";
+$nodataavailable="Pas de doneessdisponibles";
+$weekofdisplay="Semaine d'affichage";
+$numberofvirushtm="Nombre<br>de<br>virus";
+$virusscanweeklygraph="Graphique Hebdomadaire De Balayage De Virus";

@@ -1,0 +1,14 @@
+$totalinfo= "Gesamtviren fur Woche Ende ";
+$titleinfo="<head> <title>
+Virus-Scan-Statistiken  </title> </head>
+<body> <font face=verdana size=4> Tabelle der Virus-Scan-Statistiken  
+</font><p>"; 
+
+$virusname="Virus-Namensc Informationen ";
+$numberofviruses="Zahl von Occurances ";
+$nodataavailable="Keine Daten vorhanden ";
+$weekofdisplay="Woche der Anzeige";
+$numberofvirushtm="Zahl<br>der<br>Viren";
+$virusscanweeklygraph="Wochentliches Diagramm des Virus-Scans";
+
+

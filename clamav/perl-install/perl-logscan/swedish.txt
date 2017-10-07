@@ -1,0 +1,9 @@
+$totalinfo= "Totala antalet virus för vecka med slut ";
+$titleinfo="<head> <title> Virusskyddsstatistik </title> </head><body>";
+$titleinfo2=" <font face=verdana size=4> Veckotabell med virusstatistik </font><p>";
+ $virusname=" Virusnamn/info";
+$numberofviruses="Antalet förekomster";
+$nodataavailable="Ingen data tillgänglig för denna vecka";
+$weekofdisplay="Aktuell vecka";
+$numberofvirushtm="Antal<br>virus";
+$virusscanweeklygraph="Antal virus per aktuell vecka";
