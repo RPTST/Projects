@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+Z=""
+while [ "$Z" = "" ]; do
+   Z=$(whiptail --title "Please select Python version"  --menu  "" 12 50 4 \
+   " 2"  "Python 2 (default) " \
+   " 3"  "Wireing           " \
+   " 4"  "BCM2835     "  3>&1 1>&2 2>&3)
+   if [ $? = 1 ]; then
+      whiptail --msgbox "No version selected. Try again" 8 40
+   fi
+done
+PY2=0
+PY3=0
+PY4=0
+if [[ "$Z" == *"2"* ]]; then
+   PY2=1
+fi
+if [[ "$Z" == *"3"* ]]; then
+   PY3=1
+fi
+if [[ "$Z" == *"4"* ]]; then
+   PY4=1
+fi
+
+# Install required packages
+sudo apt-get install git -y
+sudo apt-get install python3-pil -y
+sudo apt-get install python3-smbus -y
+sudo apt-get install python3-dateutil -y
+sudo apt-get install python-rpi.gpio -y
+sudo apt-get install python-requests -y
+
+# Install tools
+sudo apt-get install bc i2c-tools -y
+sudo apt-get install fonts-freefont-ttf -y
+
+# Enable SPI and I2C
+sudo raspi-config nonint do_spi 0
+sudo raspi-config nonint do_i2c 0
+
+# show display Python library for Python and/or Wiring
+if [ $PY2 -eq 1 ]; then
+   sudo apt-get update
+   sudo apt-get upgrade -y
+   git clone --depth=1 https://github.com/soonuse/epd-library-python.git
+   cd epd-library-python/2.13inch_e-paper/raspberrypi/python/
+   python main.py
+fi
+if [ $PY3 -eq 1 ]; then
+   sudo apt-get update
+   sudo apt-get upgrade -y
+   sudo apt-get install wiringpi -y
+   cd ~/2.13inch_e-paper/raspberrypi/wiringpi
+   sudo ./epd
+fi
+if [ $PY4 -eq 1 ]; then
+   sudo apt-get update
+   sudo apt-get upgrade -y
+   git clone --depth=1 https://github.com/soonuse/epd-library-wiringpi.git
+   wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.52.tar.gz
+   tar zxvf bcm2835-1.52.tar.gz
+   cd bcm2835-1.52.tar.gz
+   sudo ./configure
+   sudo make
+   sudo make check
+   sudo make install
+   cd ~/2.13inch_e-paper/raspberrypi/wiringpi
+   make
+   sudo ./epd
+fi
+
+# Install drivers and setup epaper
+# display-setup
+
+whiptail --msgbox "The system will now reboot" 8 40
+reboot
