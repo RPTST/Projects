@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+PASS=$(whiptail --title "Password" --passwordbox "Please enter your password here so that the script and continue." 10 60 3>&1 1>&2 2>&3)
+
+exitstatus=$?
+
+if [ $exitstatus=0 ]; then
+	echo "Please proceed to your next step"
+else
+	echo "You chose Cancel."
+    done
+fi
+
+{
+	for ((i=0; i<=100; i+=20)); do
+		sleep 1
+		echo $i
+	done
+} | whiptail --gauge "please wait while installing" 6 60 0
+
+clear
+
+Z=""
+while [ "$Z" = "" ]; do
+   Z=$(whiptail --title "Please select Python version"  --menu  "" 12 50 4 \
+   " 2"  "Python 2 (default) " \
+   " 3"  "Wireing           " \
+   " 4"  "BCM2835     "  3>&1 1>&2 2>&3)
+   if [ $? = 1 ]; then
+      whiptail --msgbox "No version selected. Try again" 8 40
+   fi
+done
+PY2=0
+PY3=0
+PY4=0
+if [[ "$Z" == *"2"* ]]; then
+   PY2=1
+fi
+if [[ "$Z" == *"3"* ]]; then
+   PY3=1
+fi
+if [[ "$Z" == *"4"* ]]; then
+   PY4=1
+fi
+
+# Install required packages
+echo $PASS | sudo apt-get install -q pv -y
+echo $PASS | sudo apt-get install git python3-pil python-pil python3-smbus python-smbus python3-dateutil python2-dateutil -y | (pv -n > backup.tgz) 2>&1 | dialog --gauge "Progress" 10 70
+echo $PASS | sudo apt-get install -q -o Dpkg::Progress-Fancy="1" python-rpi.gpio -y
+echo $PASS | sudo apt-get install -q -o Dpkg::Progress-Fancy="1" python-requests -y
+
+# Install tools
+echo $PASS | sudo apt-get install bc i2c-tools -y | (pv -n > backup.tgz) 2>&1 | dialog --gauge "Progress" 10 70
+echo $PASS | sudo apt-get install fonts-freefont-ttf -y | (pv -n > backup.tgz) 2>&1 | dialog --gauge "Progress" 10 70
+
+# Enable SPI and I2C
+echo $PASS | sudo raspi-config nonint do_spi 0
+echo $PASS | sudo raspi-config nonint do_i2c 0
+
+# show display Python library for Python and/or Wiring
+if [ $PY2 -eq 1 ]; then
+   echo $PASS | sudo apt-get -q -o Dpkg::Progress-Fancy="1" update
+   git clone --depth=1 https://github.com/soonuse/epd-library-python.git
+   cd epd-library-python/2.13inch_e-paper/raspberrypi/python/
+   python main.py
+fi
+if [ $PY3 -eq 1 ]; then
+   echo $PASS | sudo apt-get -q -o Dpkg::Progress-Fancy="1" update
+   echo $PASS | sudo apt-get -q -o Dpkg::Progress-Fancy="1" install wiringpi -y
+   cd ~/2.13inch_e-paper/raspberrypi/wiringpi
+   echo $PASS | sudo ./epd
+fi
+if [ $PY4 -eq 1 ]; then
+   echo $PASS | sudo apt-get -q -o Dpkg::Progress-Fancy="1" update
+   git clone --depth=1 https://github.com/soonuse/epd-library-wiringpi.git
+   wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.52.tar.gz
+   tar zxvf bcm2835-1.52.tar.gz
+   cd bcm2835-1.52.tar.gz
+   echo $PASS | sudo ./configure
+   echo $PASS | sudo make
+   echo $PASS | sudo make check
+   echo $PASS | sudo make install
+   cd ~/2.13inch_e-paper/raspberrypi/wiringpi
+   echo $PASS | sudo make
+   echo $PASS | sudo ./epd
+fi
+
+# Install drivers and setup epaper
+# display-setup
+
+whiptail --msgbox "The system will now reboot" 8 40
+reboot
