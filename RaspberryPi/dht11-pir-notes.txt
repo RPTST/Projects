@@ -1,0 +1,340 @@
+git clone https://github.com/szazo/DHT11_Python.git
+git clone https://github.com/codingspecialist/DHT11_Python.git
+git clone https://github.com/adafruit/Adafruit_Python_DHT.git
+
+other
+git clone https://github.com/acmthinks/sensor-gateway.git
+git clone https://github.com/electrocoder/Raspberry_pi_Dht11_Python_Iotdashboard.git
+git clone https://github.com/bavlayan/ThingSpeak-dht11-example-with-python
+git clone https://github.com/jumblies/logger.git
+git clone https://github.com/kwitkowicz/raspberry-term
+git clone https://github.com/jmaciasportela/raspy_temp_humidity.git
+git clone https://github.com/HybZ/pi-temperature.git
+git clone https://github.com/gboling/Raspberry-Bushcam.git
+git clone https://github.com/mh03r932/raspi2dht11.git
+git clone https://github.com/Pyplate/rpi_temp_logger.git
+git clone https://github.com/adafruit/io-client-python.git
+
+apt-get install python-pip python3-pip
+pip install flask
+pip3 install flask
+pip install picamera
+pip3 install picamera
+
+
+########## LED test ##########
+
+import RPi.GPIO as GPIO
+import time
+
+LedPin = 18    # pin17
+
+def setup():
+  GPIO.setmode(GPIO.BOARD)       # Numbers GPIOs by physical location
+  GPIO.setup(LedPin, GPIO.OUT)   # Set LedPin's mode is output
+  GPIO.output(LedPin, GPIO.HIGH) # Set LedPin high(+3.3V) to turn on led
+
+def blink():
+  while True:
+    GPIO.output(LedPin, GPIO.HIGH)  # led on
+    time.sleep(1)
+    GPIO.output(LedPin, GPIO.LOW) # led off
+    time.sleep(1)
+
+def destroy():
+  GPIO.output(LedPin, GPIO.LOW)   # led off
+  GPIO.cleanup()                  # Release resource
+
+if __name__ == '__main__':     # Program start from here
+  setup()
+  try:
+    blink()
+  except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
+    destroy()
+
+########## LED test ##########
+
+#!/usr/bin/python
+
+# import libraries
+from time import sleep
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM) # set pin numbering system to bcm
+
+# setup our output pins
+GPIO.setup(18,GPIO.OUT)
+
+# create an infinite loop
+while True:
+    # turn leds on
+    print ('lights on')
+    GPIO.output(18,GPIO.HIGH)
+
+    sleep(1) # sleep 1 second
+
+    # turn leds off
+    print ('lights off')
+    GPIO.output(18,GPIO.LOW)
+    sleep(1) # sleep 1 second
+
+########## LED test ##########
+
+import RPi.GPIO as GPIO
+import time
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(18,GPIO.OUT)
+print "LED on"
+GPIO.output(18,GPIO.HIGH)
+time.sleep(1)
+print "LED off"
+GPIO.output(18,GPIO.LOW)
+
+########## DHT11 test ##########
+
+
+import RPi.GPIO as GPIO
+import dht11
+import time
+from time import sleep
+import datetime
+#from Adafruit_IO import *
+
+#from Adafruit_IO import Client
+#ADAFRUIT_IO_KEY = 'b3db5b83b37f4a1382202561b8f3842d'
+
+#aio = Client(ADAFRUIT_IO_KEY)
+
+# initialize GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.cleanup()
+
+# read data using pin 14
+instance = dht11.DHT11(pin=4)    #read data using pin 14
+GPIO.setup(18,GPIO.OUT)          #LED using pin 12
+GPIO.setup(22,GPIO.IN)           #Read output from PIR motion sensor
+
+
+while True:
+    result = instance.read()
+    if result.is_valid():
+       i=GPIO.input(22)
+       if i==0:                  #When output from motion sensor is LOW
+             print ('No intruders'),i
+             GPIO.output(18, 0)  #Turn OFF LED
+       elif i==1:                #When output from motion sensor is HIGH
+             print ('Intruder detected'),i
+             GPIO.output(18, 1)  #Turn ON LED
+    else:
+        print ('Temp reading in progress')
+ #       GPIO.output(18,GPIO.HIGH)
+        print("Last valid input: " + str(datetime.datetime.now()))
+ #       aio.send('temperature',result.temperature)
+        print("Temperature: %d C" % result.temperature)
+        print("Temperature: %d F" % ((result.temperature * 9/5)+32))
+        print("Humidity: %d %%" % result.humidity)
+ #       aio.send('Humidity', result.humidity)
+        print ('Temp reading done')
+ #       GPIO.output(18,GPIO.LOW)
+    time.sleep(1)
+
+########## Temp test with 1wire ##########
+
+# Copyright (c) 2012 Matthew Kirk
+# Licensed under MIT License, see
+# http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/LICENSE
+
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.IN)
+GPIO.setup(18, GPIO.OUT)
+GPIO.setup(25, GPIO.OUT)
+
+GPIO.output(18, GPIO.HIGH)
+
+while True:
+        if GPIO.input(17):
+                break
+
+while GPIO.input(17):
+        pass
+
+GPIO.output(18, GPIO.LOW)
+GPIO.output(25, GPIO.HIGH)
+
+datafile = open("temperaturedata.log", "w")
+
+while True:
+        tfile = open("/sys/bus/w1/devices/w1_bus_master1/10-000802824e58/w1_slave")
+        text = tfile.read()
+        tfile.close()
+        temperature_data = text.split()[-1]
+        temperature = float(temperature_data[2:])
+        temperature = temperature / 1000
+        datafile.write(str(temperature) + "\n")
+        if GPIO.input(17):
+                break
+
+datafile.close()
+GPIO.output(25, GPIO.LOW)
+
+
+
+########## PRI test ##########
+
+import RPi.GPIO as GPIO
+import time
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(22, GPIO.IN)          #Read output from PIR motion sensor
+GPIO.setup(12, GPIO.OUT)         #LED output pin
+while True:
+       i=GPIO.input(22)
+       if i==0:                  #When output from motion sensor is LOW
+             print ('No intruders'),i
+             GPIO.output(12, 0)  #Turn OFF LED
+             time.sleep(0.1)
+       elif i==1:                #When output from motion sensor is HIGH
+             print ('Intruder detected'),i
+             GPIO.output(12, 1)  #Turn ON LED
+             time.sleep(0.1)
+
+########## PRI/Temp test ##########
+
+import RPi.GPIO as GPIO
+import dht11
+import time
+from time import sleep
+import datetime
+import subprocess
+import os
+
+# initialize GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.cleanup()
+
+# Setup GPIO
+instance = dht11.DHT11(pin=4)    #read data using pin 14
+GPIO.setup(18,GPIO.OUT)          #LED using pin 12
+GPIO.setup(25,GPIO.IN)           #Read output from PIR motion sensor
+
+# Create funtion for PIR
+def PIR():
+     if GPIO.input(25):
+         print ('Intruder detected')
+         GPIO.output(18,GPIO.HIGH)
+     else:
+         print ('No intruders')
+         GPIO.output(18,GPIO.LOW)
+     time.sleep(120)
+
+def Temp():
+       result = instance.read()
+       if result.is_valid():
+           print("Last valid input: " + str(datetime.datetime.now()))
+           print("Temperature: %d F" % ((result.temperature * 9/5)+32))
+           print("Humidity: %d %%" % result.humidity)
+       time.sleep(10)
+
+#Main body
+while True:
+       Temp()
+       PIR()
+
+########## Temp with Adafruit IO ##########
+
+import RPi.GPIO as GPIO
+import dht11
+import time
+from time import sleep
+import datetime
+from Adafruit_IO import *
+
+#from Adafruit_IO import Client
+ADAFRUIT_IO_KEY = 'b3db5b83b37f4a1382202561b8f3842d'
+
+aio = Client(ADAFRUIT_IO_KEY)
+
+# initialize GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.cleanup()
+
+# read data using pin 14
+instance = dht11.DHT11(pin=4)
+GPIO.setup(18,GPIO.OUT)
+
+
+while True:
+    result = instance.read()
+    if result.is_valid():
+        print ('Temp reading in progress')
+        GPIO.output(18,GPIO.HIGH)
+        print("Last valid input: " + str(datetime.datetime.now()))
+        aio.send('temperature',result.temperature)
+        print("Temperature: %d C" % result.temperature)
+        print("Temperature: %d F" % ((result.temperature * 9/5)+32))
+        print("Humidity: %d %%" % result.humidity)
+        aio.send('Humidity', result.humidity)
+        print ('Temp reading done')
+        GPIO.output(18,GPIO.LOW)
+    time.sleep(120)
+
+########## temp with LED & log ##########
+
+# Copyright (c) 2012 Matthew Kirk
+# Licensed under MIT License, see
+# http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/LICENSE
+
+import RPi.GPIO as GPIO
+import time
+
+LED1_GPIO_PIN = 18
+LED2_GPIO_PIN = 25
+BUTTON_GPIO_PIN = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(BUTTON_GPIO_PIN, GPIO.IN)
+GPIO.setup(LED1_GPIO_PIN, GPIO.OUT)
+GPIO.setup(LED2_GPIO_PIN, GPIO.OUT)
+
+GPIO.output(LED1_GPIO_PIN, GPIO.HIGH)
+
+while True:
+        if GPIO.input(BUTTON_GPIO_PIN):
+                break
+
+while GPIO.input(BUTTON_GPIO_PIN):
+        pass
+
+GPIO.output(LED1_GPIO_PIN, GPIO.LOW)
+GPIO.output(LED2_GPIO_PIN, GPIO.HIGH)
+
+timestamp = time.strftime("%Y-%m-%d-%H-%M-%S")
+filename = "".join(["temperaturedata", timestamp, ".log"])
+datafile = open(filename, "w", 1)
+
+while True:
+        tfile = open("/sys/bus/w1/devices/10-000802824e58/w1_slave")
+        text = tfile.read()
+        tfile.close()
+        temperature_data = text.split()[-1]
+        temperature = float(temperature_data[2:])
+        temperature = temperature / 1000
+        datafile.write(str(temperature) + "\n")
+        if GPIO.input(BUTTON_GPIO_PIN):
+                break
+
+datafile.close()
+GPIO.output(LED2_GPIO_PIN, GPIO.LOW)
+
+
+
+########## graphing temp ##########
+
+apt-get install python3-matplotlib
+apt-get install python-matplotlib
+
